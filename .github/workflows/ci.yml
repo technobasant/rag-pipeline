@@ -1,0 +1,211 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black isort mypy
+          pip install -r requirements.txt
+      
+      - name: Run Ruff linter
+        run: ruff check src/ tests/ airflow/dags/
+      
+      - name: Check formatting with Black
+        run: black --check src/ tests/ airflow/dags/
+      
+      - name: Check import sorting with isort
+        run: isort --check-only src/ tests/ airflow/dags/
+      
+      - name: Type checking with mypy
+        run: mypy src/ --ignore-missing-imports
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: airflow
+          POSTGRES_PASSWORD: airflow
+          POSTGRES_DB: airflow
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio pytest-mock
+      
+      - name: Run unit tests
+        env:
+          STORAGE_BACKEND: minio
+          MINIO_ENDPOINT: localhost:9000
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_BUCKET_NAME: test-bucket
+          CHROMA_HOST: localhost
+          CHROMA_PORT: 8000
+          OLLAMA_HOST: localhost
+          OLLAMA_PORT: 11434
+          AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@localhost:5432/airflow
+        run: |
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  test-dag:
+    name: Test Airflow DAGs
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: airflow
+          POSTGRES_PASSWORD: airflow
+          POSTGRES_DB: airflow
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install Airflow and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r airflow/requirements.txt
+          pip install pytest pytest-airflow
+      
+      - name: Initialize Airflow DB
+        env:
+          AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@localhost:5432/airflow
+          AIRFLOW__CORE__LOAD_EXAMPLES: false
+        run: |
+          airflow db init
+      
+      - name: Test DAGs
+        env:
+          AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@localhost:5432/airflow
+          PYTHONPATH: ${{ github.workspace }}/src
+        run: |
+          pytest tests/test_dag_comprehensive.py -v
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [test, test-dag]
+    strategy:
+      matrix:
+        service: [api, airflow]
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Build ${{ matrix.service }} image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile.${{ matrix.service }}
+          push: false
+          tags: data-scrape-rag-${{ matrix.service }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Start services with docker-compose
+        run: |
+          docker-compose up -d minio postgres
+          sleep 10
+      
+      - name: Run integration tests
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+          pytest test_etl_simple.py test_scraper_functional.py -v
+      
+      - name: Cleanup
+        if: always()
+        run: docker-compose down -v 

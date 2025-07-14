@@ -1,0 +1,29 @@
+FROM apache/airflow:2.8.1-python3.11
+
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y build-essential default-jre curl wget python3-pip
+
+# (Optional) Install Spark, DuckDB, MinIO client, etc. here if needed
+# Example: RUN pip install pyspark duckdb minio chromadb ollama
+
+USER airflow
+
+# Copy requirements
+COPY airflow/requirements.txt /requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r /requirements.txt
+
+# Copy source code
+COPY ./src /opt/airflow/src
+COPY ./airflow/dags /opt/airflow/dags
+COPY ./data /opt/airflow/data
+COPY ./lineage /opt/airflow/lineage
+COPY ./sample_config /opt/airflow/sample_config
+
+# Set Python path
+ENV PYTHONPATH="/opt/airflow:${PYTHONPATH}"
+
+ENTRYPOINT ["/entrypoint"]

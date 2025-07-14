@@ -1,0 +1,1 @@
+# Catalog module for DuckDB + Delta Lake integration

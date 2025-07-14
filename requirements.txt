@@ -1,0 +1,39 @@
+# API and pipeline dependencies (no Airflow or Airflow providers)
+fastapi
+uvicorn
+pyspark==3.5.5	
+deltalake
+pyarrow
+duckdb
+beautifulsoup4
+minio
+chromadb
+sentence-transformers
+torch
+transformers
+playwright
+s3fs
+trio
+prometheus-client
+python-multipart
+pytest
+pytest-mock
+pyiceberg
+polars
+faiss-cpu
+
+# Use latest Pydantic and FastAPI compatible email-validator
+email-validator>=2.0
+
+# Other common dependencies
+requests
+pandas
+pyyaml
+python-dotenv
+structlog
+boto3
+
+# Added from the code block
+openlineage-python==1.35.0
+
+ollama

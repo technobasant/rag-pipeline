@@ -1,0 +1,301 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Data-Scrape-to-RAG Observability Dashboard",
+    "tags": ["rag", "data-pipeline", "observability"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Health Overview",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=\"rag-api\"}",
+            "legendFormat": "RAG API",
+            "refId": "A"
+          },
+          {
+            "expr": "up{job=\"ollama\"}",
+            "legendFormat": "Ollama LLM",
+            "refId": "B"
+          },
+          {
+            "expr": "up{job=\"chroma\"}",
+            "legendFormat": "Vector DB",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "RAG Query Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(rag_queries_total[5m])",
+            "legendFormat": "Queries/sec",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Queries per second",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "RAG Query Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(rag_queries_total{status=\"success\"}[5m]) / rate(rag_queries_total[5m]) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 90},
+                {"color": "green", "value": 95}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Vector Database Document Count",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rag_api_collection_document_count",
+            "legendFormat": "Documents",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {"mode": "continuous-GrYlRd"}
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "RAG Query Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(rag_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(rag_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(rag_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "99th percentile",
+            "refId": "C"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time (seconds)",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 6,
+        "title": "LLM Request Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(llm_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{model}} - 50th percentile",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(llm_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{model}} - 95th percentile",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Duration (seconds)",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 7,
+        "title": "Vector Search Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(vector_search_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(vector_search_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Search Time (seconds)",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 8,
+        "title": "HTTP Request Rate by Endpoint",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Requests per second",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 9,
+        "title": "Context Documents Retrieved",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(rag_context_documents_retrieved_bucket[5m]))",
+            "legendFormat": "Median documents",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(rag_context_documents_retrieved_bucket[5m]))",
+            "legendFormat": "95th percentile",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Number of documents",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      },
+      {
+        "id": 10,
+        "title": "Airflow DAG Status",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "airflow_dag_status",
+            "legendFormat": "{{dag_id}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "displayMode": "color-background"
+            },
+            "mappings": [
+              {"options": {"0": {"text": "Failed", "color": "red"}}, "type": "value"},
+              {"options": {"1": {"text": "Success", "color": "green"}}, "type": "value"},
+              {"options": {"2": {"text": "Running", "color": "yellow"}}, "type": "value"}
+            ]
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "schemaVersion": 30,
+    "version": 1,
+    "links": [
+      {
+        "title": "Airflow UI",
+        "url": "http://localhost:8080",
+        "type": "link"
+      },
+      {
+        "title": "Marquez Lineage",
+        "url": "http://localhost:3001",
+        "type": "link"
+      },
+      {
+        "title": "RAG API Docs",
+        "url": "http://localhost:8001/docs",
+        "type": "link"
+      }
+    ]
+  },
+  "meta": {
+    "type": "db",
+    "canSave": true,
+    "canEdit": true,
+    "canAdmin": true,
+    "canStar": true,
+    "slug": "data-scrape-to-rag-observability",
+    "url": "/d/rag-observability/data-scrape-to-rag-observability",
+    "expires": "0001-01-01T00:00:00Z",
+    "created": "2025-07-13T12:00:00Z",
+    "updated": "2025-07-13T12:00:00Z",
+    "updatedBy": "admin",
+    "createdBy": "admin",
+    "version": 1,
+    "hasAcl": false,
+    "isFolder": false,
+    "folderId": 0,
+    "folderTitle": "General",
+    "folderUrl": "",
+    "provisioned": false,
+    "provisionedExternalId": ""
+  }
+}

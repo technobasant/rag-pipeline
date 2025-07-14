@@ -1,0 +1,41 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # RAG API metrics
+  - job_name: 'rag-api'
+    static_configs:
+      - targets: ['api:8001']
+    metrics_path: '/prometheus'
+    scrape_interval: 30s
+
+  # Airflow metrics (if available)
+  - job_name: 'airflow'
+    static_configs:
+      - targets: ['airflow-webserver:8080']
+    metrics_path: '/admin/metrics'
+    scrape_interval: 60s
+
+  # Chroma metrics (if available)
+  - job_name: 'chroma'
+    static_configs:
+      - targets: ['chromadb:8000']
+    metrics_path: '/api/v1/heartbeat'
+    scrape_interval: 30s
+
+  # Ollama metrics (if available)
+  - job_name: 'ollama'
+    static_configs:
+      - targets: ['ollama:11434']
+    metrics_path: '/api/tags'
+    scrape_interval: 60s

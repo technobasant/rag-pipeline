@@ -1,0 +1,96 @@
+flowchart LR
+    subgraph "Data Sources"
+        WEB[Web Pages<br/>docs.python.org]
+    end
+    
+    subgraph "Orchestration Layer"
+        AF[Apache Airflow<br/>:8080]
+    end
+    
+    subgraph "Ingestion"
+        SCRAPER[Web Scraper<br/>Python + BeautifulSoup]
+        ROBOTS[robots.txt<br/>Compliance]
+    end
+    
+    subgraph "Storage Layer - MinIO :9000"
+        RAW[(Raw Data<br/>/raw)]
+        BRONZE[(Bronze Layer<br/>/bronze)]
+        SILVER[(Silver Layer<br/>/silver)]
+        GOLD[(Gold Layer<br/>/gold)]
+    end
+    
+    subgraph "Processing Engine"
+        SPARK[Apache Spark<br/>+ Delta Lake]
+        ETL[ETL Pipeline<br/>Bronze → Silver → Gold]
+    end
+    
+    subgraph "AI/ML Layer"
+        EMB[Sentence Transformers<br/>all-MiniLM-L6-v2]
+        CHROMA[(Chroma Vector DB<br/>:8000)]
+        OLLAMA[Ollama LLM<br/>llama3.2:1b<br/>:11434]
+    end
+    
+    subgraph "API Layer"
+        FASTAPI[FastAPI RAG Service<br/>:8001]
+        DOCS[API Documentation<br/>/docs]
+    end
+    
+    subgraph "Monitoring & Lineage"
+        OL[OpenLineage<br/>Events]
+        LOGS[JSON Logs<br/>/lineage]
+        METRICS[Metrics<br/>/metrics]
+    end
+    
+    subgraph "Client Applications"
+        CURL[curl/HTTP Clients]
+        BROWSER[Web Browser]
+    end
+    
+    %% Data Flow
+    WEB --> SCRAPER
+    ROBOTS --> SCRAPER
+    AF --> SCRAPER
+    SCRAPER --> RAW
+    
+    AF --> ETL
+    RAW --> SPARK
+    SPARK --> BRONZE
+    BRONZE --> SPARK
+    SPARK --> SILVER
+    SILVER --> SPARK
+    SPARK --> GOLD
+    
+    AF --> EMB
+    GOLD --> EMB
+    EMB --> CHROMA
+    
+    CHROMA --> FASTAPI
+    OLLAMA --> FASTAPI
+    FASTAPI --> DOCS
+    
+    CURL --> FASTAPI
+    BROWSER --> FASTAPI
+    BROWSER --> AF
+    BROWSER --> DOCS
+    
+    %% Monitoring
+    SCRAPER --> OL
+    ETL --> OL
+    EMB --> OL
+    OL --> LOGS
+    FASTAPI --> METRICS
+    
+    %% Styling
+    classDef storage fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef processing fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef ai fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef api fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef orchestration fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef monitoring fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+    
+    class RAW,BRONZE,SILVER,GOLD,CHROMA storage
+    class DUCK,ETL processing
+    class EMB,OLLAMA ai
+    class FASTAPI,DOCS api
+    class AF orchestration
+    class OL,LOGS,METRICS monitoring
