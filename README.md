@@ -46,8 +46,8 @@ make demo          # Quick demo workflow
 
 ### Service Endpoints
 
-- **Airflow UI**: <http://localhost:8080> (admin/admin)
-- **MinIO Console**: <http://localhost:9001> (minioadmin/minioadmin123)
+- **Airflow UI**: <http://localhost:8080> (airflow/airflow)
+- **MinIO Console**: <http://localhost:9001> (minioadmin/minioadmin)
 - **RAG API**: <http://localhost:8001/docs>
 - **Chroma DB**: <http://localhost:8000>
 
