@@ -123,12 +123,15 @@ python monitoring/dashboard_manager.py import monitoring/grafana/dashboards/data
 
 ## 🎥 Demo Video
 
-> **TODO**: Add link to 5-minute demo video showing:
->
-> 1. `docker compose up`
-> 2. Trigger Airflow DAG
-> 3. Show MinIO buckets and Delta tables
-> 4. Call `/ask` endpoint twice
+Watch a 5-minute demo showing the complete pipeline in action:
+
+[![Demo Video](https://img.shields.io/badge/▶️_Watch_Demo-Google_Drive-blue?style=for-the-badge)](https://drive.google.com/file/d/1t4fgtmcU1nBDCjIeTbbeYqh0B7m_Pnv5/view?usp=drive_link)
+
+The demo covers:
+1. `docker compose up` - Starting all services
+2. Trigger Airflow DAG - Running the data pipeline
+3. Show MinIO buckets and Delta tables - Data lake exploration
+4. Call `/ask` endpoint - Testing the RAG API
 
 ## 🔍 Troubleshooting
 
