@@ -54,10 +54,10 @@ build: .env.docker
 up: .env.docker
 	@echo "Starting all services..."
 	docker-compose up -d
-	@echo "Services started. Access points:"
-	@echo "  - Airflow UI: http://localhost:8080 (admin/admin)"
+	@echo "Services started. Access points (credentials are local development defaults):"
+	@echo "  - Airflow UI: http://localhost:8080 (airflow/airflow)"
 	@echo "  - Spark Master UI: http://localhost:8081"
-	@echo "  - MinIO Console: http://localhost:9001 (minioadmin/minioadmin123)"
+	@echo "  - MinIO Console: http://localhost:9001 (minioadmin/minioadmin)"
 	@echo "  - RAG API: http://localhost:8001/docs"
 	@echo "  - Chroma: http://localhost:8000"
 
