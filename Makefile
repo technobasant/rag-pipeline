@@ -5,7 +5,7 @@ help:
 	@echo "Data-Scrape-to-RAG Lakehouse - Development Commands"
 	@echo ""
 	@echo "Setup Commands:"
-	@echo "  setup     - Initialize environment and copy .env.example to .env"
+	@echo "  setup     - Create local env files (.env.docker, env.docker, .env) from their .example templates"
 	@echo "  build     - Build all Docker images"
 	@echo "  up        - Start all services with docker-compose"
 	@echo "  down      - Stop all services"
@@ -35,17 +35,23 @@ help:
 	@echo "  logs      - Show logs from all services"
 
 # Setup and initialization
-setup:
-	@echo "Setting up development environment..."
-	@if [ ! -f .env ]; then cp env.example .env; echo "Created .env from env.example"; fi
+# Local env files are git-ignored. Each one is created from its tracked
+# <name>.example template when missing; existing files are never overwritten.
+ENV_FILES := .env.docker env.docker .env
+
+$(ENV_FILES):
+	@cp $@.example $@
+	@echo "Created $@ from $@.example"
+
+setup: $(ENV_FILES)
 	@echo "Environment setup complete!"
 
 # Docker operations
-build:
+build: .env.docker
 	@echo "Building Docker images..."
 	docker-compose build
 
-up:
+up: .env.docker
 	@echo "Starting all services..."
 	docker-compose up -d
 	@echo "Services started. Access points:"
@@ -55,31 +61,31 @@ up:
 	@echo "  - RAG API: http://localhost:8001/docs"
 	@echo "  - Chroma: http://localhost:8000"
 
-down:
+down: .env.docker
 	@echo "Stopping all services..."
 	docker-compose down
 
-clean:
+clean: .env.docker
 	@echo "Cleaning up data, logs, and Docker volumes..."
 	docker-compose down -v
 	docker system prune -f
 	rm -rf data/raw/* data/bronze/* data/silver/* data/gold/* lineage/*
 	@echo "Cleanup complete!"
 
-logs:
+logs: .env.docker
 	@echo "Showing logs from all services..."
 	docker-compose logs -f
 
 # Pipeline execution
-scrape:
+scrape: .env.docker
 	@echo "Running web scraper..."
 	docker-compose exec airflow-scheduler python -m src.scraper.scraper
 
-etl:
+etl: .env.docker
 	@echo "Running ETL pipeline..."
 	docker-compose exec airflow-scheduler python -m src.etl.bronze_silver_gold
 
-embed:
+embed: .env.docker
 	@echo "Generating embeddings..."
 	docker-compose exec airflow-scheduler python -m src.embeddings.embedder
 
@@ -142,11 +148,11 @@ test-dag:
 	./scripts/run_tests.py dag -v
 
 # Testing in Docker (alternative approach)
-test-docker:
+test-docker: .env.docker
 	@echo "Running tests in Docker container..."
 	docker-compose exec airflow-scheduler python -m pytest tests/ -v
 
-test-docker-coverage:
+test-docker-coverage: .env.docker
 	@echo "Running tests with coverage in Docker..."
 	docker-compose exec airflow-scheduler python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term-missing
 
@@ -181,7 +187,7 @@ lint:
 	flake8 src/ tests/
 
 # Monitoring and debugging
-status:
+status: .env.docker
 	@echo "Service status:"
 	docker-compose ps
 

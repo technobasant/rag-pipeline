@@ -60,6 +60,9 @@ coverage.xml
 .env
 .env.local
 .env.*.local
+# Local env files created by `make setup` from the tracked *.example templates
+.env.docker
+env.docker
 
 # Data directories
 data/raw/*
@@ -70,6 +73,9 @@ data/gold/*
 !data/bronze/.gitkeep
 !data/silver/.gitkeep
 !data/gold/.gitkeep
+# DuckDB catalog, created on first ETL/embedding run
+data/catalog.duckdb
+data/catalog.duckdb.wal
 
 # Airflow
 airflow/logs/
