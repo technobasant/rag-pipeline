@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+
+      # Syntax errors and undefined names only: the rest is style, and a gate
+      # that fails on style gets switched off.
+      - name: ruff
+        run: uvx ruff check --select E9,F63,F7,F82 src airflow tests
+
+      # The unit suite runs without Spark, Torch, Airflow or live services.
+      # Tests that need them skip themselves; the full stack is `make up`.
+      - name: unit tests
+        run: >
+          uv run --no-project --python 3.12
+          --with pytest --with pytest-mock --with pandas --with pyyaml
+          --with requests --with fastapi --with httpx --with structlog
+          --with prometheus-client --with python-dotenv --with beautifulsoup4
+          --with minio
+          python -m pytest tests -q -o addopts=""
+
+      - name: compose files are valid
+        run: |
+          cp .env.docker.example .env.docker
+          cp .env.example .env
+          docker compose -f docker-compose.yaml config -q
+          docker compose -f docker-compose.dev.yaml config -q
