@@ -1,44 +1,47 @@
 [project]
-name = "app-info-mcp"
-version = "1.0.0"
-description = "MCP Server providing essential app info such as app versions, screen names and events names for a given app id"
+name = "rag-pipeline"
+version = "0.1.0"
+description = "End-to-end scrape-to-RAG lakehouse: Airflow, Spark bronze/silver/gold on Delta and MinIO, Chroma, and a FastAPI answer service with OpenLineage."
 readme = "README.md"
-requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Basant Bhattarai" }]
+requires-python = ">=3.11"
+# Mirrors requirements.txt, which the Docker images install. Airflow itself
+# comes from the Airflow base image (Dockerfile.airflow), not from here.
 dependencies = [
-    "fastmcp>=2.8.0",
-    "fastapi>=0.115.12",
-    "uvicorn>=0.24.0",
-    "pandas>=2.2.3",
-    "psycopg2-binary>=2.9.10",
-    "pyarrow>=20.0.0",
-    "sqlalchemy>=2.0.41",
-    "trino[sqlalchemy]>=0.334.0",
-    "python-dotenv>=1.0.0",
-    "uvloop==0.21.0",
-    "pyyaml>=6.0.2",
-    "pytest>=8.4.1",
-    "pydantic>=2.7.0",
-    "pydantic-settings>=2.5.0",
-    "python-multipart>=0.0.6",
-    "httpx>=0.28.1",
-    "redis>=5.0.0",
-    "cachetools>=5.3.0",
-    "motor==3.3.2",
-    "pymongo==4.6.1",
-    "google-auth>=2.40.3",
-    "google-auth-oauthlib>=1.2.2",
-    "authlib>=1.6.0",
-    "pyjwt>=2.10.1",
-    "passlib[bcrypt]>=1.7.4",
-    "openai>=1.0.0",
-    "pgvector>=0.2.0",
-    "asyncpg>=0.29.0",
-    "psycopg2-binary>=2.9.10",
+    "fastapi",
+    "uvicorn",
+    "pyspark==3.5.5",
+    "deltalake",
+    "pyarrow",
+    "duckdb",
+    "polars",
+    "pyiceberg",
+    "beautifulsoup4",
+    "playwright",
+    "requests",
+    "minio",
+    "s3fs",
+    "boto3",
+    "chromadb",
+    "faiss-cpu",
+    "sentence-transformers",
+    "torch",
+    "transformers",
+    "ollama",
+    "openlineage-python==1.35.0",
+    "prometheus-client",
+    "structlog",
+    "pandas",
+    "pyyaml",
+    "python-dotenv",
+    "python-multipart",
+    "email-validator>=2.0",
+    "trio",
 ]
 
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+[dependency-groups]
+dev = ["pytest", "pytest-mock", "ruff"]
 
-[tool.setuptools]
-packages = ["app", "config", "database", "services", "static"]
+[tool.ruff]
+target-version = "py311"
